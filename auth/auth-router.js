@@ -25,5 +25,38 @@ router.post('/register', (req, res) => {
     }
 })
 router.post('./login', (req, res) => {
-    
+    const { username, password } = req.body
+    if (isValid(req.body)) {
+        Users.findBy({ username })
+            .then(([user]) => {
+                if(user && bcryptjs.compareSync(password, user.password)) {
+                    const token = getJwt(user)
+                    res.status(401).json({ msg: "Welcome to out API", user, token })
+                }
+                else {
+                    res.status(401).json({ msg: "Invalid credentials"});
+                }
+            })
+            .catch(err => {
+                res.json({msg: err.message})
+            })
+        }
+        else {
+            res.status(400).json({
+                message: "please provide username and password, password should be alphanumeric"
+            });
+        }
 })
+
+function getJwt(user) {
+    const payload ={
+        username: user.username,
+    };
+    const jwtOptions = {
+
+    };
+
+    return jwt.sign(payload, config.jwtSecret, jwtOptions);
+}
+
+module.exports = router
